@@ -85,10 +85,11 @@ async def send_msg(user_id, message):
 
 @Client.on_chat_join_request()
 async def autoAccept(bot: Client, cmd: ChatJoinRequest):
-    chat = cmd.chat  # chat
-    user = cmd.from_user
+    
     try:
         while True:
+            chat = cmd.chat  # chat
+            user = cmd.from_user
             await db.add_user(bot, user)
             await bot.approve_chat_join_request(chat_id=chat.id, user_id=user.id)
             bool_approve_msg = await db.get_bool_approve_msg(Config.OWNER)
