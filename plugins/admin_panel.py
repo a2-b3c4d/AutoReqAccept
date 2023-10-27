@@ -104,6 +104,7 @@ async def autoAccept(bot: Client, cmd: ChatJoinRequest):
                 print('Approval Message Is Disabled By Admin ❌')
                 
             await asyncio.sleep(1)
+            continue
 
     except Exception as e:
         print('Error on line {}'.format(
