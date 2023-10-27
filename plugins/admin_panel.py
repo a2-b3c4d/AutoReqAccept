@@ -88,19 +88,22 @@ async def autoAccept(bot: Client, cmd: ChatJoinRequest):
     chat = cmd.chat  # chat
     user = cmd.from_user
     try:
-        await db.add_user(bot, user)
-        await bot.approve_chat_join_request(chat_id=chat.id, user_id=user.id)
-        bool_approve_msg = await db.get_bool_approve_msg(Config.OWNER)
-
-        if bool_approve_msg:
-            _param = await db.get_approve_msg(Config.OWNER)
-
-            if _param:
-                await bot.send_message(chat_id=user.id, text=_param.format(mention=user.mention, title=chat.title))
+        while True:
+            await db.add_user(bot, user)
+            await bot.approve_chat_join_request(chat_id=chat.id, user_id=user.id)
+            bool_approve_msg = await db.get_bool_approve_msg(Config.OWNER)
+    
+            if bool_approve_msg:
+                _param = await db.get_approve_msg(Config.OWNER)
+    
+                if _param:
+                    await bot.send_message(chat_id=user.id, text=_param.format(mention=user.mention, title=chat.title))
+                else:
+                    await bot.send_message(chat_id=user.id, text=Config.APPROVED_WELCOME_TEXT.format(mention=user.mention, title=chat.title))
             else:
-                await bot.send_message(chat_id=user.id, text=Config.APPROVED_WELCOME_TEXT.format(mention=user.mention, title=chat.title))
-        else:
-            print('Approval Message Is Disabled By Admin ❌')
+                print('Approval Message Is Disabled By Admin ❌')
+                
+            await asyncio.sleep(1)
 
     except Exception as e:
         print('Error on line {}'.format(
