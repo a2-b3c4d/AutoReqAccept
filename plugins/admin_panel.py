@@ -85,12 +85,13 @@ async def send_msg(user_id, message):
 
 @Client.on_chat_join_request()
 async def autoAccept(bot: Client, cmd: ChatJoinRequest):
-    
     chat = cmd.chat  # chat
-    user = cmd.from_user
+    user = cmd.from_user  # user
+
+    # Accepting Request of User ✅
     try:
         await bot.approve_chat_join_request(chat_id=chat.id, user_id=user.id)
-        await db.add_user(bot, user)
+        await db.add_user(bot, cmd)
         bool_approve_msg = await db.get_bool_approve_msg(Config.OWNER)
 
         if bool_approve_msg:
@@ -102,7 +103,7 @@ async def autoAccept(bot: Client, cmd: ChatJoinRequest):
                 await bot.send_message(chat_id=user.id, text=Config.APPROVED_WELCOME_TEXT.format(mention=user.mention, title=chat.title))
         else:
             print('Approval Message Is Disabled By Admin ❌')
-            
+
         await asyncio.sleep(1)
 
     except Exception as e:
@@ -112,26 +113,26 @@ async def autoAccept(bot: Client, cmd: ChatJoinRequest):
 
 @Client.on_chat_member_updated()
 async def Upade(bot: Client, cmd: ChatMemberUpdated):
+    chat = cmd.chat
+    user = cmd.from_user
+
+    # Sending Message those user who left the chat ✅
     try:
-        chat = cmd.chat
-        user = cmd.from_user
+        ms = await bot.get_chat_member(chat_id=chat.id, user_id=user.id)
+        print(ms.status)
+    except UserNotParticipant:
+        bool_leave = await db.get_bool_leave_msg(Config.OWNER)
 
-        try:
-            ms = await bot.get_chat_member(chat_id=chat.id, user_id=user.id)
-            print(ms.status)
-        except UserNotParticipant:
-            bool_leave = await db.get_bool_leave_msg(Config.OWNER)
+        if bool_leave:
+            leavemsg = await db.get_leave_msg(Config.OWNER)
+            print(leavemsg)
+            if leavemsg:
+                await bot.send_message(chat_id=user.id, text=leavemsg.format(mention=user.mention, title=chat.title))
 
-            if bool_leave:
-                leavemsg = await db.get_leave_msg(Config.OWNER)
-                print(leavemsg)
-                if leavemsg:
-                    await bot.send_message(chat_id=user.id, text=leavemsg.format(mention=user.mention, title=chat.title))
-
-                else:
-                    await bot.send_message(chat_id=user.id, text=Config.LEAVING_BY_TEXT.format(mention=user.mention, title=chat.title))
             else:
-                print('Leave Message is Disabled By Admin ❌')
+                await bot.send_message(chat_id=user.id, text=Config.LEAVING_BY_TEXT.format(mention=user.mention, title=chat.title))
+        else:
+            print('Leave Message is Disabled By Admin ❌')
 
     except Exception as e:
         print('Error on line {}'.format(
